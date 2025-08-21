@@ -31,6 +31,14 @@ OBJ := $(SRC:$(SRCDIR)/%.c=$(OBJDIR)/%.o)
 
 INC := -I$(INCDIR)
 
+WIN_CC := gcc
+WIN_NAME := $(NAME).exe
+WIN_OBJDIR := obj_win
+WIN_OBJ := $(SRC:$(SRCDIR)/%.c=$(WIN_OBJDIR)/%.o)
+WIN_CFLAGS := -Wall -Wextra -Werror
+WIN_SDL_CFLAGS := $(shell pkg-config --cflags sdl2)
+WIN_SDL_LIBS := $(shell pkg-config --libs sdl2) -lSDL2_image -lSDL2main
+
 all: $(NAME)
 
 $(OBJDIR)/%.o: $(SRCDIR)/%.c
@@ -40,12 +48,26 @@ $(OBJDIR)/%.o: $(SRCDIR)/%.c
 $(NAME): $(OBJ)
 	$(CC) $(CFLAGS) $(OBJ) $(SDL_LIBS) -o $(NAME)
 
+windows: $(WIN_NAME)
+
+$(WIN_OBJDIR)/%.o: $(SRCDIR)/%.c
+	@mkdir -p $(dir $@)
+	$(WIN_CC) $(WIN_CFLAGS) $(WIN_SDL_CFLAGS) $(INC) -c $< -o $@
+
+$(WIN_NAME): $(WIN_OBJ)
+	$(WIN_CC) $(WIN_CFLAGS) $(WIN_OBJ) $(WIN_SDL_LIBS) -o $(WIN_NAME)
+
 clean:
 	$(RM) -r $(OBJDIR)
+
+clean-windows:
+	$(RM) -r $(WIN_OBJDIR)
 
 fclean: clean
 	$(RM) $(NAME)
 
 re: fclean all
 
-.PHONY: all clean fclean re
+re-windows: clean-windows windows
+
+.PHONY: all clean fclean re windows clean-windows re-windows
